@@ -2,31 +2,38 @@ classdef BoolXRD < matlab.apps.AppBase
 
     % Properties that correspond to app components
     properties (Access = public)
-        UIFigure                       matlab.ui.Figure
-        GridLayout                     matlab.ui.container.GridLayout
-        LeftPanel                      matlab.ui.container.Panel
-        PlaneOpacitySwitch             matlab.ui.control.Switch
-        PlaneOpacitySwitchLabel        matlab.ui.control.Label
-        UITable                        matlab.ui.control.Table
-        Image                          matlab.ui.control.Image
-        LatticeSizecEditField          matlab.ui.control.NumericEditField
-        LatticeSizecEditFieldLabel     matlab.ui.control.Label
-        LatticeSizebEditField          matlab.ui.control.NumericEditField
-        LatticeSizebEditFieldLabel     matlab.ui.control.Label
-        LatticeSizeaEditField          matlab.ui.control.NumericEditField
-        LatticeSizeaEditFieldLabel     matlab.ui.control.Label
-        CrystalStructureDropDown       matlab.ui.control.DropDown
-        CrystalStructureDropDownLabel  matlab.ui.control.Label
-        ReadPlotButton                 matlab.ui.control.StateButton
-        AtomicSizeSlider               matlab.ui.control.Slider
-        AtomicSizeSliderLabel          matlab.ui.control.Label
-        RightPanel                     matlab.ui.container.Panel
-        GridLayout2                    matlab.ui.container.GridLayout
-        OpacitySlider                  matlab.ui.control.Slider
-        OpacitySliderLabel             matlab.ui.control.Label
-        Image2                         matlab.ui.control.Image
-        UIAxes2                        matlab.ui.control.UIAxes
-        UIAxes                         matlab.ui.control.UIAxes
+        UIFigure                        matlab.ui.Figure
+        AcademicModeMenu                matlab.ui.container.Menu
+        TrainingModeMenu                matlab.ui.container.Menu
+        GridLayout                      matlab.ui.container.GridLayout
+        LeftPanel                       matlab.ui.container.Panel
+        ImportRawXRDDataaswellCheckBox  matlab.ui.control.CheckBox
+        PlaneOpacitySwitch              matlab.ui.control.Switch
+        PlaneOpacitySwitchLabel         matlab.ui.control.Label
+        LatticeSizecEditField           matlab.ui.control.NumericEditField
+        LatticeSizecEditFieldLabel      matlab.ui.control.Label
+        LatticeSizebEditField           matlab.ui.control.NumericEditField
+        LatticeSizebEditFieldLabel      matlab.ui.control.Label
+        LatticeSizeaEditField           matlab.ui.control.NumericEditField
+        LatticeSizeaEditFieldLabel      matlab.ui.control.Label
+        CrystalStructureDropDown        matlab.ui.control.DropDown
+        CrystalStructureDropDownLabel   matlab.ui.control.Label
+        AtomicSizeSlider                matlab.ui.control.Slider
+        AtomicSizeSliderLabel           matlab.ui.control.Label
+        UITable                         matlab.ui.control.Table
+        Image                           matlab.ui.control.Image
+        ReadPlotButton                  matlab.ui.control.StateButton
+        RightPanel                      matlab.ui.container.Panel
+        GridLayout2                     matlab.ui.container.GridLayout
+        GridLayout3                     matlab.ui.container.GridLayout
+        CommonMaterialsLabel            matlab.ui.control.Label
+        Label                           matlab.ui.control.Label
+        SampleMaterialsListBox          matlab.ui.control.ListBox
+        OpacitySlider                   matlab.ui.control.Slider
+        OpacitySliderLabel              matlab.ui.control.Label
+        Image2                          matlab.ui.control.Image
+        UIAxes                          matlab.ui.control.UIAxes
+        UIAxes2                         matlab.ui.control.UIAxes
     end
 
     % Properties that correspond to apps with auto-reflow
@@ -37,14 +44,19 @@ classdef BoolXRD < matlab.apps.AppBase
     
     methods (Access = public)
         
-        function results = recaller(app, old)
+        function results = recaller(app, old, hklSending)
             figure("Visible", "off");
             if (old == true)
                 cla(app.UIAxes)
                 a_size = app.LatticeSizeaEditField.Value;
                 b_size = app.LatticeSizebEditField.Value;
                 c_size = app.LatticeSizecEditField.Value;
-                hkl = app.UITable.Data{:,:};
+                if (size(hklSending) == 0)
+                    hkl = app.UITable.Data;
+                else
+                    hkl = hklSending{:,:};
+                    app.UITable.Data = hkl;
+                end
                 count = 0;
                 numDataSets = size(hkl, 1);
                 plotColors = jet(numDataSets);
@@ -79,7 +91,7 @@ classdef BoolXRD < matlab.apps.AppBase
                     ylim(app.UIAxes,[0 b_size])
                     zlim(app.UIAxes,[0 c_size])
                     title(app.UIAxes, "XRD Planes and Crystal Structure")
-                    lgd_data = app.UITable.Data{:,:};
+                    lgd_data = app.UITable.Data;
                     lgd = legend(app.UIAxes, string(lgd_data(:, 1)) + string(lgd_data(:, 2)) + string(lgd_data(:, 3)));
                     title(lgd, "Miller Indices (hkl)")
                 end
@@ -106,24 +118,28 @@ classdef BoolXRD < matlab.apps.AppBase
                 a_size = app.LatticeSizeaEditField.Value;
                 b_size = app.LatticeSizebEditField.Value;
                 c_size = app.LatticeSizecEditField.Value;
-                uiwait(msgbox("Please select your .xlsx file with the hkl values.", "[BoolXRD] Upload hkl File", "modal"))
+
+                uiwait(msgbox("Please select your .xlsx file with the hkl values.", "[BoolXRD] Upload hkl File", "modal"));
     
                 [file, path] = uigetfile("*.xlsx");
                 hkl_file = strcat(path, file);
-                t = readtable(hkl_file, "Sheet", 1);
+                t = readmatrix(hkl_file);
                 app.UITable.Data = t;
-    
-                uiwait(msgbox("Please select your raw XRD Data with .xlsx extension.", "[BoolXRD] Upload Raw XRD Data", "modal"))
-                [file, path] = uigetfile("*.xlsx");
-                xrd_file = strcat(path, file);
-                data = readtable(xrd_file);
-                xrd = str2double(data{:,:});
-                plot(app.UIAxes2, xrd(:,1), xrd(:,2));
-                hold(app.UIAxes2, "on");
-                title(app.UIAxes2, "XRD Data");
-                xlabel(app.UIAxes2, "Angle/2theta");
-                ylabel(app.UIAxes2, "Intensity");
-                hkl = app.UITable.Data{:,:};
+                
+                if app.ImportRawXRDDataaswellCheckBox.Value == true
+        
+                    uiwait(msgbox("Please select your raw XRD Data with .xlsx extension.", "[BoolXRD] Upload Raw XRD Data", "modal"))
+                    [file, path] = uigetfile("*.xlsx");
+                    xrd_file = strcat(path, file);
+                    xrd = readmatrix(xrd_file);
+                    plot(app.UIAxes2, xrd(:,1), xrd(:,2));
+                    hold(app.UIAxes2, "on");
+                    title(app.UIAxes2, "XRD Data");
+                    xlabel(app.UIAxes2, "Angle/2theta");
+                    ylabel(app.UIAxes2, "Intensity");
+                end
+           
+                hkl = app.UITable.Data;
                 count = 0;
                 numDataSets = size(hkl, 1);
                 plotColors = jet(numDataSets);
@@ -158,7 +174,7 @@ classdef BoolXRD < matlab.apps.AppBase
                     ylim(app.UIAxes,[0 b_size])
                     zlim(app.UIAxes,[0 c_size])
                     title(app.UIAxes, "XRD Planes and Crystal Structure")
-                    lgd_data = app.UITable.Data{:,:};
+                    lgd_data = app.UITable.Data;
                     lgd = legend(app.UIAxes, string(lgd_data(:, 1)) + string(lgd_data(:, 2)) + string(lgd_data(:, 3)));
                     title(lgd, "Miller Indices (hkl)")
                 end
@@ -183,6 +199,14 @@ classdef BoolXRD < matlab.apps.AppBase
                 hold(app.UIAxes, "off");
             end
         end
+        
+        function results = samplematerials(app, selection)
+            items = dictionary;
+            items("Platinium Nanoparticle (Pt)") = {[1 1 1 100; 2 0 0 100; 2 2 0 100; 3 1 1 100]};
+            items("Gold Nanoparticle (Au)") = {[1 1 1 100; 2 0 0 100; 2 2 0 100; 3 1 1 100]};
+            items("NaCl") = {[1 1 1 100 ; 2 0 0 45; 2 2 0 100; 3 1 1 100; 2 2 2 100; 4 0 0 100; 3 3 1 100; 4 2 0 100; 4 2 2 100]};
+            app.recaller(true, items(selection));
+        end
     end
     
 
@@ -200,21 +224,21 @@ classdef BoolXRD < matlab.apps.AppBase
             indices = event.Indices;
             newData = event.NewData;
             situation = true;
-            app.recaller(situation);
+            app.recaller(situation, []);
         end
 
         % Value changed function: ReadPlotButton
         function ReadPlotButtonValueChanged(app, event)
             value = app.ReadPlotButton.Value;
             situation = false;
-            app.recaller(situation);
+            app.recaller(situation, []);
         end
 
         % Value changed function: CrystalStructureDropDown
         function CrystalStructureDropDownValueChanged(app, event)
             value = app.CrystalStructureDropDown.Value;
             situation = true;
-            app.recaller(situation)
+            app.recaller(situation, [])
             
         end
 
@@ -222,7 +246,7 @@ classdef BoolXRD < matlab.apps.AppBase
         function AtomicSizeSliderValueChanged(app, event)
             value = app.AtomicSizeSlider.Value;
             situation = true;
-            app.recaller(situation);
+            app.recaller(situation, []);
             
         end
 
@@ -236,35 +260,35 @@ classdef BoolXRD < matlab.apps.AppBase
         function PlaneOpacitySwitchValueChanged(app, event)
             value = app.PlaneOpacitySwitch.Value;
             situation = true;
-            app.recaller(situation);
+            app.recaller(situation, []);
         end
 
         % Value changed function: OpacitySlider
         function OpacitySliderValueChanged(app, event)
             value = app.OpacitySlider.Value;
             situation = true;
-            app.recaller(situation);
+            app.recaller(situation, []);
         end
 
         % Value changed function: LatticeSizeaEditField
         function LatticeSizeaEditFieldValueChanged(app, event)
             value = app.LatticeSizeaEditField.Value;
             situation = true;
-            app.recaller(situation);
+            app.recaller(situation, []);
         end
 
         % Value changed function: LatticeSizebEditField
         function LatticeSizebEditFieldValueChanged(app, event)
             value = app.LatticeSizebEditField.Value;
             situation = true;
-            app.recaller(situation);
+            app.recaller(situation, []);
         end
 
         % Value changed function: LatticeSizecEditField
         function LatticeSizecEditFieldValueChanged(app, event)
             value = app.LatticeSizecEditField.Value;
             situation = true;
-            app.recaller(situation);
+            app.recaller(situation, []);
         end
 
         % Cell edit callback: UITable
@@ -272,7 +296,41 @@ classdef BoolXRD < matlab.apps.AppBase
             indices = event.Indices;
             newData = event.NewData;
             situation = true;
-            app.recaller(situation)
+            app.recaller(situation, [])
+        end
+
+        % Menu selected function: AcademicModeMenu
+        function AcademicModeMenuSelected(app, event)
+            app.SampleMaterialsListBox.Visible=false; %Hides the Sample Materials List
+            app.Label.Visible=false;
+            app.CommonMaterialsLabel.Visible=false;
+            app.ReadPlotButton.Visible = true;
+            app.ImportRawXRDDataaswellCheckBox.Visible = true;
+            cla(app.UIAxes2);
+            cla(app.UIAxes);
+        end
+
+        % Menu selected function: TrainingModeMenu
+        function TrainingModeMenuSelected(app, event)
+            app.SampleMaterialsListBox.Visible=true; %Displays the Sample Materials List
+            app.Label.Visible=true;
+            app.CommonMaterialsLabel.Visible=true;
+            app.ReadPlotButton.Visible = false;
+            app.ImportRawXRDDataaswellCheckBox.Visible = false;
+            cla(app.UIAxes2);
+            cla(app.UIAxes);
+        end
+
+        % Value changed function: SampleMaterialsListBox
+        function SampleMaterialsListBoxValueChanged(app, event)
+            value = app.SampleMaterialsListBox.Value;
+            app.samplematerials(value);
+        end
+
+        % Clicked callback: SampleMaterialsListBox
+        function SampleMaterialsListBoxClicked(app, event)
+            item = event.InteractionInformation.Item;
+            
         end
 
         % Changes arrangement of the app based on UIFigure width
@@ -310,6 +368,16 @@ classdef BoolXRD < matlab.apps.AppBase
             app.UIFigure.Name = 'MATLAB App';
             app.UIFigure.SizeChangedFcn = createCallbackFcn(app, @updateAppLayout, true);
 
+            % Create AcademicModeMenu
+            app.AcademicModeMenu = uimenu(app.UIFigure);
+            app.AcademicModeMenu.MenuSelectedFcn = createCallbackFcn(app, @AcademicModeMenuSelected, true);
+            app.AcademicModeMenu.Text = 'Academic Mode';
+
+            % Create TrainingModeMenu
+            app.TrainingModeMenu = uimenu(app.UIFigure);
+            app.TrainingModeMenu.MenuSelectedFcn = createCallbackFcn(app, @TrainingModeMenuSelected, true);
+            app.TrainingModeMenu.Text = 'Training Mode';
+
             % Create GridLayout
             app.GridLayout = uigridlayout(app.UIFigure);
             app.GridLayout.ColumnWidth = {309, '1x'};
@@ -323,6 +391,27 @@ classdef BoolXRD < matlab.apps.AppBase
             app.LeftPanel = uipanel(app.GridLayout);
             app.LeftPanel.Layout.Row = 1;
             app.LeftPanel.Layout.Column = 1;
+
+            % Create ReadPlotButton
+            app.ReadPlotButton = uibutton(app.LeftPanel, 'state');
+            app.ReadPlotButton.ValueChangedFcn = createCallbackFcn(app, @ReadPlotButtonValueChanged, true);
+            app.ReadPlotButton.Text = 'Read & Plot';
+            app.ReadPlotButton.FontSize = 18;
+            app.ReadPlotButton.FontWeight = 'bold';
+            app.ReadPlotButton.Position = [25 96 225 36];
+
+            % Create Image
+            app.Image = uiimage(app.LeftPanel);
+            app.Image.Position = [1 750 2 2];
+
+            % Create UITable
+            app.UITable = uitable(app.LeftPanel);
+            app.UITable.ColumnName = {'h'; 'k'; 'l'; 'Intensity'};
+            app.UITable.ColumnWidth = {50, 50, 50, 90};
+            app.UITable.RowName = {};
+            app.UITable.ColumnEditable = true;
+            app.UITable.CellEditCallback = createCallbackFcn(app, @UITableCellEdit2, true);
+            app.UITable.Position = [25 226 237 271];
 
             % Create AtomicSizeSliderLabel
             app.AtomicSizeSliderLabel = uilabel(app.LeftPanel);
@@ -339,14 +428,6 @@ classdef BoolXRD < matlab.apps.AppBase
             app.AtomicSizeSlider.FontWeight = 'bold';
             app.AtomicSizeSlider.Position = [97 683 197 3];
             app.AtomicSizeSlider.Value = 2;
-
-            % Create ReadPlotButton
-            app.ReadPlotButton = uibutton(app.LeftPanel, 'state');
-            app.ReadPlotButton.ValueChangedFcn = createCallbackFcn(app, @ReadPlotButtonValueChanged, true);
-            app.ReadPlotButton.Text = 'Read & Plot';
-            app.ReadPlotButton.FontSize = 18;
-            app.ReadPlotButton.FontWeight = 'bold';
-            app.ReadPlotButton.Position = [26 125 225 36];
 
             % Create CrystalStructureDropDownLabel
             app.CrystalStructureDropDownLabel = uilabel(app.LeftPanel);
@@ -403,32 +484,25 @@ classdef BoolXRD < matlab.apps.AppBase
             app.LatticeSizecEditField.Position = [126 524 100 22];
             app.LatticeSizecEditField.Value = 1;
 
-            % Create Image
-            app.Image = uiimage(app.LeftPanel);
-            app.Image.Position = [1 750 2 2];
-
-            % Create UITable
-            app.UITable = uitable(app.LeftPanel);
-            app.UITable.ColumnName = {'h'; 'k'; 'l'; 'Intensity'};
-            app.UITable.ColumnWidth = {50, 50, 50, 90};
-            app.UITable.RowName = {};
-            app.UITable.ColumnEditable = true;
-            app.UITable.CellEditCallback = createCallbackFcn(app, @UITableCellEdit2, true);
-            app.UITable.Position = [25 226 237 271];
-
             % Create PlaneOpacitySwitchLabel
             app.PlaneOpacitySwitchLabel = uilabel(app.LeftPanel);
             app.PlaneOpacitySwitchLabel.HorizontalAlignment = 'center';
             app.PlaneOpacitySwitchLabel.FontWeight = 'bold';
-            app.PlaneOpacitySwitchLabel.Position = [96 32 84 22];
+            app.PlaneOpacitySwitchLabel.Position = [101 20 84 22];
             app.PlaneOpacitySwitchLabel.Text = 'Plane Opacity';
 
             % Create PlaneOpacitySwitch
             app.PlaneOpacitySwitch = uiswitch(app.LeftPanel, 'slider');
             app.PlaneOpacitySwitch.Items = {'Intensity', 'Slider'};
             app.PlaneOpacitySwitch.ValueChangedFcn = createCallbackFcn(app, @PlaneOpacitySwitchValueChanged, true);
-            app.PlaneOpacitySwitch.Position = [104 69 69 30];
+            app.PlaneOpacitySwitch.Position = [109 57 69 30];
             app.PlaneOpacitySwitch.Value = 'Intensity';
+
+            % Create ImportRawXRDDataaswellCheckBox
+            app.ImportRawXRDDataaswellCheckBox = uicheckbox(app.LeftPanel);
+            app.ImportRawXRDDataaswellCheckBox.Text = 'Import Raw XRD Data as well.';
+            app.ImportRawXRDDataaswellCheckBox.FontSize = 13;
+            app.ImportRawXRDDataaswellCheckBox.Position = [25 140 199 22];
 
             % Create RightPanel
             app.RightPanel = uipanel(app.GridLayout);
@@ -439,6 +513,17 @@ classdef BoolXRD < matlab.apps.AppBase
             app.GridLayout2 = uigridlayout(app.RightPanel);
             app.GridLayout2.ColumnWidth = {'15x', '17.71x'};
             app.GridLayout2.RowHeight = {'1x', '18.33x', '1x', '5.54x'};
+
+            % Create UIAxes2
+            app.UIAxes2 = uiaxes(app.GridLayout2);
+            title(app.UIAxes2, 'Title')
+            xlabel(app.UIAxes2, 'X')
+            ylabel(app.UIAxes2, 'Y')
+            zlabel(app.UIAxes2, 'Z')
+            app.UIAxes2.XGrid = 'on';
+            app.UIAxes2.XMinorGrid = 'on';
+            app.UIAxes2.Layout.Row = 2;
+            app.UIAxes2.Layout.Column = 1;
 
             % Create UIAxes
             app.UIAxes = uiaxes(app.GridLayout2);
@@ -455,21 +540,10 @@ classdef BoolXRD < matlab.apps.AppBase
             app.UIAxes.Layout.Row = 2;
             app.UIAxes.Layout.Column = 2;
 
-            % Create UIAxes2
-            app.UIAxes2 = uiaxes(app.GridLayout2);
-            title(app.UIAxes2, 'Title')
-            xlabel(app.UIAxes2, 'X')
-            ylabel(app.UIAxes2, 'Y')
-            zlabel(app.UIAxes2, 'Z')
-            app.UIAxes2.XGrid = 'on';
-            app.UIAxes2.XMinorGrid = 'on';
-            app.UIAxes2.Layout.Row = 2;
-            app.UIAxes2.Layout.Column = 1;
-
             % Create Image2
             app.Image2 = uiimage(app.GridLayout2);
-            app.Image2.Layout.Row = 4;
-            app.Image2.Layout.Column = [1 2];
+            app.Image2.Layout.Row = [3 4];
+            app.Image2.Layout.Column = 2;
             app.Image2.ImageSource = fullfile(pathToMLAPP, 'bg photo.png');
 
             % Create OpacitySliderLabel
@@ -487,6 +561,38 @@ classdef BoolXRD < matlab.apps.AppBase
             app.OpacitySlider.Layout.Column = 2;
             app.OpacitySlider.FontWeight = 'bold';
             app.OpacitySlider.Value = 17.8155390703113;
+
+            % Create GridLayout3
+            app.GridLayout3 = uigridlayout(app.GridLayout2);
+            app.GridLayout3.RowHeight = {22, '1x'};
+            app.GridLayout3.Layout.Row = 4;
+            app.GridLayout3.Layout.Column = 1;
+
+            % Create SampleMaterialsListBox
+            app.SampleMaterialsListBox = uilistbox(app.GridLayout3);
+            app.SampleMaterialsListBox.Items = {'Platinium Nanoparticle (Pt)', 'Gold Nanoparticle (Au)', 'NaCl'};
+            app.SampleMaterialsListBox.ValueChangedFcn = createCallbackFcn(app, @SampleMaterialsListBoxValueChanged, true);
+            app.SampleMaterialsListBox.Visible = 'off';
+            app.SampleMaterialsListBox.Layout.Row = 2;
+            app.SampleMaterialsListBox.Layout.Column = 2;
+            app.SampleMaterialsListBox.ClickedFcn = createCallbackFcn(app, @SampleMaterialsListBoxClicked, true);
+            app.SampleMaterialsListBox.Value = 'Platinium Nanoparticle (Pt)';
+
+            % Create Label
+            app.Label = uilabel(app.GridLayout3);
+            app.Label.HorizontalAlignment = 'center';
+            app.Label.WordWrap = 'on';
+            app.Label.Visible = 'off';
+            app.Label.Layout.Row = 2;
+            app.Label.Layout.Column = 1;
+            app.Label.Text = 'You can select one of the following common materials that are listed to display their cubic cell structure.';
+
+            % Create CommonMaterialsLabel
+            app.CommonMaterialsLabel = uilabel(app.GridLayout3);
+            app.CommonMaterialsLabel.Visible = 'off';
+            app.CommonMaterialsLabel.Layout.Row = 1;
+            app.CommonMaterialsLabel.Layout.Column = 2;
+            app.CommonMaterialsLabel.Text = 'Common Materials';
 
             % Show the figure after all components are created
             app.UIFigure.Visible = 'on';

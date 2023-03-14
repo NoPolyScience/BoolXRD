@@ -1,7 +1,9 @@
 # BoolXRD
 BoolXRD is a *freeware* designed to plot 3D cubic cell structures of crystals depending on their X-Ray Diffraction (XRD) Crystallography data. The "hkl" values obtained from XRD are used to plot the reflecting planes within a cubic cell. In addition, various crystal structures (*eg. SC, BCC, FCC*) can be simulated and customized in BoolXRD. 
 Further information about this *open-science* project can be found on its web site.
+
 **Download BoolXRD:** www.boolxrd.net
+
 Watch 5 Minutes YouTube Tutorial: https://www.youtube.com/watch?v=HgALnoGDJag
 ## BoolXRD v1.4
 Since the raw XRD data is still independent of hkl values, there is now a checkbox to determine if you would like to view your XRD data together with the cubic cell.

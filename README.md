@@ -3,14 +3,14 @@ BoolXRD is a freeware designed to plot 3D cubic cell structures of crystals depe
 further information about this project can be found on its web site.
 Download BoolXRD: www.boolxrd.net
 Watch 5 Minutes YouTube Tutorial: https://www.youtube.com/watch?v=HgALnoGDJag
-##BoolXRD v1.4
+## BoolXRD v1.4
 Since the raw XRD data is still independent of hkl values, there is now a checkbox to determine şf you would like to view your XRd data together with the cubic cell.
 
 "Academic Mode" and "Training Mode" now has been introduced! From now on, you are able to view the cubic structures of common materials (eg. gold, platinum and common salts) meaning that you do not need to have your own data to train yourself about Miller Indices logic, X-Ray Diffraction and etc. 
 
 The number of sample materials will get wider in BoolXRd v1.5, and this means that BoolXRd is not only a data visualization tool, yet it can also be effectively used for practicing XRD applications.
 
-##BoolXRD v1.3
+## BoolXRD v1.3
 The 'hkl' data are directly imported from an external Excel (.xlsx) data. Hence, they are not derived from the uploaded raw XRD data.
 
 Therefore, raw XRD data is independent of the hkl values uploaded, and the XRD graph is sketched only to present the peaks in the raw data.
